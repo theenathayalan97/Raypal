@@ -45,6 +45,7 @@ route.delete('/deleteProduct/:id',check.tokenValidation,check.accessValidation([
 route.post('/orderProduct/:id',check.tokenValidation,check.accessValidation(['superAdmin','admin',"customer"]),order.orderCreate)
 route.get('/getOrder/:id',check.tokenValidation,check.accessValidation(['superAdmin','admin',"customer"]),order.getOrder)
 route.get('/getAllOrder/:id',check.tokenValidation,check.accessValidation(['superAdmin','admin']),order.getAllOrder)
-route.put('/orderSuccess/:id',check.tokenValidation,check.accessValidation(['superAdmin','admin']),order.orderSuccess)
+route.put('/orderSuccess/:id',check.tokenValidation,check.accessValidation(['superAdmin','admin',]),order.orderSuccess)
+route.put('/orderCancel/:id',check.tokenValidation,check.accessValidation(['superAdmin','admin',]),order.orderCancel)
 
 module.exports = route; 

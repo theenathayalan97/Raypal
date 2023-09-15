@@ -24,8 +24,8 @@ async function orderCreate(req, res) {
                 "payment_method": "paypal"
             },
             "redirect_urls": {
-                "return_url": "http://localhost:3000/success",
-                "cancel_url": "http://localhost:3000/cancel"
+                "return_url": "http://localhost:3000/api/orderSuccess",
+                "cancel_url": "http://localhost:3000/api/orderCancel"
             },
             "transactions": [{
                 "item_list": {
@@ -45,7 +45,7 @@ async function orderCreate(req, res) {
             }]
         };
 
-        let value = paypal.payment.create(create_payment_json, async function (error, payment) {
+       paypal.payment.create(create_payment_json, async function (error, payment) {
 
             if (error) {
                 return res.status(400).json({ message: error })
@@ -62,8 +62,8 @@ async function orderCreate(req, res) {
                         paymentDetail.links = payment.links[i]
                         paymentDetail.domain = domain
                         paymentDetail.prize = data.product_prize
-                        const result = await order.create(paymentDetail)
-                       return result ;
+                        const result = await order.create(paymentDetail)  
+                        return result.uuid;
                     }
                 }
             }
@@ -80,7 +80,7 @@ async function getOrder(req, res) {
         if (!data) {
             return res.status(404).json({ message: "order not found" })
         }
-        return data ;
+        return data;
     } catch (error) {
         return res.status(400).json({ message: "something went wrong", result: error.message })
     }
@@ -92,18 +92,16 @@ async function getAllOrder(req, res) {
         if (!data) {
             return res.status(404).json({ message: "order not found" })
         }
-        return data ;
+        return data;
     } catch (error) {
         return res.status(400).json({ message: "something went wrong", result: error.message })
     }
 }
 
-// app.get('/success', (req, res) => {
 async function orderSuccess(req, res) {
     try {
         let id = req.params.id
-        let orderId = { uuid: id }
-        let data = await order.findOne({ where: orderId })
+        let data = await order.findOne({ where: { uuid: id, status : 'bending' } })
         if (!data) {
             return res.status(400).json({ message: " product not found " })
         }
@@ -119,12 +117,12 @@ async function orderSuccess(req, res) {
                 }
             }]
         };
-        paypal.payment.execute(paymentId, execute_payment_json,async function (error, payment) {
+        paypal.payment.execute(paymentId, execute_payment_json, async function (error, payment) {
             if (error) {
                 throw error;
             } else {
                 data.status = payment
-                const result = await order.update(id,data)
+                const result = await order.update(id, data)
                 return result;
             }
         });
@@ -133,4 +131,20 @@ async function orderSuccess(req, res) {
     }
 }
 
-module.exports = { orderCreate, getOrder, getAllOrder, orderSuccess, }
+async function orderCancel(req, res) {
+    try {
+        let id = req.params.id
+        let orderId = { uuid: id }
+        let data = await order.findOne({ where: orderId })
+        if (!data) {
+            return res.status(400).json({ message: " product not found " })
+        }
+        data.status = "cancel"
+        const result = await order.update(id, data)
+        return result;
+    } catch (error) {
+        return res.status(400).json({ message: "something went wrong", result: error.message })
+    }
+}
+
+module.exports = { orderCreate, getOrder, getAllOrder, orderSuccess, orderCancel, }
